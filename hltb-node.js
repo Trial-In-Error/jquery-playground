@@ -1,49 +1,44 @@
 var currentDoc;
 var DOMParser = require('xmldom').DOMParser;
-var http = require('http');
 var parser = new DOMParser();
-var jQuery = require('jquery');
-// var jsdom = require('jsdom');
 var ent = require('ent');
 var cheerio = require('cheerio');
 var request = require('request');
 
 var current
 var listOfGames;
+var debug;
+var $;
 
 function cleanUpSteam(gameName) {
 	return gameName.replace(/[∞®™]/g, "").replace(/æ/g, "ae");
 }
 
-var debug
 function parseMyGamesList(userAccountName) {
 	var options = ({
-		host: "steamcommunity.com",
-		path: "/id/"+userAccountName+"/games?tab=all&xml=1"
+		url: "http://steamcommunity.com/id/"+userAccountName+"/games?tab=all&xml=1"
 	});
-	var callback = function(response) {
-		var data = '';
-		response.on('data', function(chunk) {
-			data += chunk;
-		})
-		response.on('end', function() {
-			// debug = data;
-			var $ = cheerio.load(data);
-			listOfGames = [];
-			$('game').each(function(index) {
-				var gameName = cleanUpSteam($('game').eq(index).find('name').html().split("<!--[CDATA[").pop().split("]]-->")[0].trim());
-				if(typeof gameName === 'undefined') {
-					console.warn('The nth game, '+index+' has no Steam name!');
-				}
-				console.log('name: '+gameName);
-				listOfGames.push({
-					name: gameName,
-					id: parseInt($('game').eq(index).find('appID').html())
-				});
+	var callback = function(err, httpResponse, body) {
+		if(err) {
+			console.error(err);
+			return;
+		}
+		debug = body;
+		/*var*/ $ = cheerio.load(body);
+		listOfGames = [];
+		$('game').each(function(index) {
+			var gameName = cleanUpSteam($('game').eq(index).find('name').html().split("<!--[CDATA[").pop().split("]]-->")[0].trim());
+			if(typeof gameName === 'undefined') {
+				console.warn('The nth game, '+index+' has no Steam name!');
+			}
+			console.log('name: '+gameName);
+			listOfGames.push({
+				name: gameName,
+				id: parseInt($('game').eq(index).find('appID').html())
 			});
 		});
-	}
-	http.request(options, callback).end();
+	};
+	request.get(options, callback);
 }
 parseMyGamesList('Milgwyn');
 
@@ -120,6 +115,10 @@ function timeToBeat(thisGame) {
 		formData: {queryString: cleanUpPHPHLTB(thisGame.name), t:'games'}
 	}
 	var callback = function(err,httpResponse,body) {
+		if(err) {
+			console.error(err);
+			return;
+		}
 		$ = cheerio.load(body);
 		var gameName = cleanUpHLTB($('li').first().find('a[href^="game.php?"]').last().html());
 		if(typeof gameName === 'string') {
