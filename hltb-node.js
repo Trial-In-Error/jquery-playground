@@ -1,14 +1,10 @@
-var currentDoc;
-var DOMParser = require('xmldom').DOMParser;
-var parser = new DOMParser();
-var ent = require('ent');
-var cheerio = require('cheerio');
-var request = require('request');
+var DOMParser = require('xmldom').DOMParser,
+	parser = new DOMParser(),
+	ent = require('ent'),
+	cheerio = require('cheerio'),
+	request = require('request');
 
-var current
 var listOfGames;
-var debug;
-var $;
 
 function cleanUpSteam(gameName) {
 	return gameName.replace(/[∞®™]/g, "").replace(/æ/g, "ae");
@@ -23,8 +19,7 @@ function parseMyGamesList(userAccountName) {
 			console.error(err);
 			return;
 		}
-		debug = body;
-		/*var*/ $ = cheerio.load(body);
+		$ = cheerio.load(body);
 		listOfGames = [];
 		$('game').each(function(index) {
 			var gameName = cleanUpSteam($('game').eq(index).find('name').html().split("<!--[CDATA[").pop().split("]]-->")[0].trim());
@@ -119,7 +114,7 @@ function timeToBeat(thisGame) {
 			console.error(err);
 			return;
 		}
-		$ = cheerio.load(body);
+		var $ = cheerio.load(body);
 		var gameName = cleanUpHLTB($('li').first().find('a[href^="game.php?"]').last().html());
 		if(typeof gameName === 'string') {
 			gameName = ent.decode(gameName);
