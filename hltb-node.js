@@ -121,7 +121,7 @@ function promptUserName() {
 			}
 		}
 	}, function(err, result) {
-		parseMyGamesList(result.username, promptTimeToBeat);
+		parseMyGamesList(result.username, promptTimeToBeat, promptUserName);
 	});
 }
 
@@ -129,7 +129,7 @@ function cleanUpSteam(gameName) {
 	return gameName.replace(/[∞®™]/g, "").replace(/æ/g, "ae");
 }
 
-function parseMyGamesList(userAccountName, incomingCallback) {
+function parseMyGamesList(userAccountName, incomingCallback, loopback) {
 	var options = ({
 		url: "http://steamcommunity.com/id/"+userAccountName+"/games?tab=all&xml=1"
 	});
@@ -138,7 +138,17 @@ function parseMyGamesList(userAccountName, incomingCallback) {
 			console.error(err);
 			return;
 		}
+
 		$ = cheerio.load(body);
+
+		if($('error').eq(0).html() === '<!--[CDATA[The specified profile could not be found.]]-->') {
+			
+			if(loopback) {
+				console.error('The steam user id '+userAccountName+' could not be found!');
+				loopback();
+				return;
+			}
+		}
 		listOfGames = [];
 		$('game').each(function(index) {
 			var gameName = cleanUpSteam($('game').eq(index).find('name').html().split("<!--[CDATA[").pop().split("]]-->")[0].trim());
@@ -151,7 +161,9 @@ function parseMyGamesList(userAccountName, incomingCallback) {
 				id: parseInt($('game').eq(index).find('appID').html())
 			});
 		});
-		incomingCallback();
+		if(incomingCallback) {
+			incomingCallback();	
+		}
 	};
 	request.get(options, callback);
 }
