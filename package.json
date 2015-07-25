@@ -2,7 +2,7 @@
   "name": "jquery-playground",
   "version": "1.0.0",
   "description": "",
-  "main": "steam-how-long-to-beat-node.js",
+  "main": "hltb-node.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
