@@ -77,7 +77,7 @@ function promptSaveAsJSON() {
 			}
 		}
 	}, function(err, result) {
-		var res = result.fetch.toLocaleLowerCase();
+		var res = result.save.toLocaleLowerCase();
 		if(res === "y" || res === "yes" || res === "true" || res === "t" || res === "file") {
 			exportJSONToFile(listOfGames, promptSaveAsCSV);
 		} else if(res === "n" || res === "no" || res === "false" || res === "f" || res === "steam") {
@@ -89,6 +89,10 @@ function promptSaveAsJSON() {
 	});
 }
 
+function quit() {
+	process.exit();
+}
+
 function promptSaveAsCSV() {
 	prompt.get({
 		properties: {
@@ -97,15 +101,21 @@ function promptSaveAsCSV() {
 			}
 		}
 	}, function(err, result) {
-		var res = result.fetch.toLocaleLowerCase();
+		var res = result.save.toLocaleLowerCase();
 		if(res === "y" || res === "yes" || res === "true" || res === "t" || res === "file") {
-			exportCSVToFile(listOfGames, process.exit);
+			exportToCSV(quit);
 		} else if(res === "n" || res === "no" || res === "false" || res === "f" || res === "steam") {
 			process.exit();
 		} else {
 			console.log('Input not recognized! Please respond with "yes" or "no".');
 			promptSaveAsCSV();
 		}
+	});
+}
+
+function promptUserName() {
+	prompt.get(['username'], function(err, result) {
+		parseMyGamesList(result.username, promptTimeToBeat);
 	});
 }
 
@@ -117,7 +127,7 @@ function cleanUpSteam(gameName) {
 	return gameName.replace(/[∞®™]/g, "").replace(/æ/g, "ae");
 }
 
-function parseMyGamesList(userAccountName) {
+function parseMyGamesList(userAccountName, incomingCallback) {
 	var options = ({
 		url: "http://steamcommunity.com/id/"+userAccountName+"/games?tab=all&xml=1"
 	});
@@ -139,6 +149,7 @@ function parseMyGamesList(userAccountName) {
 				id: parseInt($('game').eq(index).find('appID').html())
 			});
 		});
+		incomingCallback();
 	};
 	request.get(options, callback);
 }
@@ -206,15 +217,19 @@ function exportToCSV(callback) {
 	fs.writeFile('listOfGames.csv', parseToCSV(listOfGames), function(err) {
 		if(err) throw err;
 		console.log('File written: listOfGames.csv');
-		callback();
+		if(callback) {
+			callback();	
+		}
 	});
 }
 
 function exportJSONToFile(listOfGames, callback) {
 	fs.writeFile('listOfGames.json', JSON.stringify(listOfGames), function(err) {
 		if(err) throw err;
-		console.log('File written: listOfGames.csv');
-		callback();
+		console.log('File written: listOfGames.json');
+		if(callback) {
+			callback();
+		}
 	});
 }
 
