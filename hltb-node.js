@@ -92,7 +92,7 @@ function parseToCSV(listOfGames) {
 	for(var game of listOfGames) {
 		string += game.name+", "+game.id+", "+game.mainStoryLength+"\n";
 	}
-	return string;
+	return string.slice(0, -1);
 }
 
 function exportToCSV() {
