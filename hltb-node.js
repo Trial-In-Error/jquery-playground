@@ -16,7 +16,7 @@ function promptUseExistingFile() {
 	prompt.get({
 		properties: {
 			useFile: {
-				description: "Use existing file?"
+				description: "Import existing JSON file?"
 			}
 		}
 	}, function(err, result) {
@@ -114,14 +114,16 @@ function promptSaveAsCSV() {
 }
 
 function promptUserName() {
-	prompt.get(['username'], function(err, result) {
+	prompt.get({
+		properties: {
+			username: {
+				description: "What is your steam user ID?"
+			}
+		}
+	}, function(err, result) {
 		parseMyGamesList(result.username, promptTimeToBeat);
 	});
 }
-
-// function promptConfirm() {
-
-// }
 
 function cleanUpSteam(gameName) {
 	return gameName.replace(/[∞®™]/g, "").replace(/æ/g, "ae");
