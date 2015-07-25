@@ -90,7 +90,7 @@ function sortGames() {
 function parseToCSV(listOfGames) {
 	string = "Game Name, Steam ID, Time to Beat\n";
 	for(var game of listOfGames) {
-		string += game.name+", "+game.id+", "+game.mainStoryLength+"\n";
+		string += "\""+game.name+"\", "+game.id+", "+game.mainStoryLength+"\n";
 	}
 	return string.slice(0, -1);
 }
