@@ -3,9 +3,115 @@ var DOMParser = require('xmldom').DOMParser,
 	ent = require('ent'),
 	cheerio = require('cheerio'),
 	request = require('request'),
-	fs = require('fs');
+	fs = require('fs'),
+	process = require('process'),
+	prompt = require('prompt');
 
 var listOfGames;
+
+prompt.start();
+promptUseExistingFile();
+
+function promptUseExistingFile() {
+	prompt.get({
+		properties: {
+			useFile: {
+				description: "Use existing file?"
+			}
+		}
+	}, function(err, result) {
+		var res = result.useFile.toLocaleLowerCase();
+		if(res === "y" || res === "yes" || res === "true" || res === "t" || res === "file") {
+			promptFileName();
+		} else if(res === "n" || res === "no" || res === "false" || res === "f" || res === "steam") {
+			promptUserName();
+		} else {
+			console.log('Input not recognized! Please respond with "yes" or "no".');
+			promptUseExistingFile();
+		}
+	});
+}
+
+function promptFileName() {
+	prompt.get({
+		properties: {
+			fileName: {
+				description: "What is the file's name?"
+			}
+		}
+	}, function(err, result) {
+		try {
+			loadJSONFromFile(promptTimeToBeat);
+		} catch (err) {
+			console.log(err);
+			promptFileName();
+		}
+	});
+}
+
+function promptTimeToBeat() {
+	prompt.get({
+		properties: {
+			fetch: {
+				description: "Fetch the time to beat for each game?"
+			}
+		}
+	}, function(err, result) {
+		var res = result.fetch.toLocaleLowerCase();
+		if(res === "y" || res === "yes" || res === "true" || res === "t" || res === "file") {
+			timeToBeatAll(listOfGames, promptSaveAsJSON);
+		} else if(res === "n" || res === "no" || res === "false" || res === "f" || res === "steam") {
+			promptSaveAsJSON();
+		} else {
+			console.log('Input not recognized! Please respond with "yes" or "no".');
+			promptTimeToBeat();
+		}
+	});
+}
+
+function promptSaveAsJSON() {
+	prompt.get({
+		properties: {
+			save: {
+				description: "Save the results as a JSON file?"
+			}
+		}
+	}, function(err, result) {
+		var res = result.fetch.toLocaleLowerCase();
+		if(res === "y" || res === "yes" || res === "true" || res === "t" || res === "file") {
+			exportJSONToFile(listOfGames, promptSaveAsCSV);
+		} else if(res === "n" || res === "no" || res === "false" || res === "f" || res === "steam") {
+			promptSaveAsCSV();
+		} else {
+			console.log('Input not recognized! Please respond with "yes" or "no".');
+			promptSaveAsJSON();
+		}
+	});
+}
+
+function promptSaveAsCSV() {
+	prompt.get({
+		properties: {
+			save: {
+				description: "Save the results as a CSV file?"
+			}
+		}
+	}, function(err, result) {
+		var res = result.fetch.toLocaleLowerCase();
+		if(res === "y" || res === "yes" || res === "true" || res === "t" || res === "file") {
+			exportCSVToFile(listOfGames, process.exit);
+		} else if(res === "n" || res === "no" || res === "false" || res === "f" || res === "steam") {
+			process.exit();
+		} else {
+			console.log('Input not recognized! Please respond with "yes" or "no".');
+			promptSaveAsCSV();
+		}
+	});
+}
+
+// function promptConfirm() {
+
+// }
 
 function cleanUpSteam(gameName) {
 	return gameName.replace(/[∞®™]/g, "").replace(/æ/g, "ae");
@@ -38,14 +144,15 @@ function parseMyGamesList(userAccountName) {
 }
 // parseMyGamesList('Milgwyn');
 
-function timeToBeatAll(listOfGames) {
+function timeToBeatAll(listOfGames, callback) {
 	for(var index in listOfGames) {
 		setTimeout(timeToBeat, 250*index, listOfGames[index]);
 	}
 	setTimeout(function() {
 		console.log('Should be done!');
 		// timeToBeatAll(listOfGames[0]);
-	}, 250*(listOfGames.length+3));
+		callback();
+	}, 250*(listOfGames.length+10));
 }
 
 function cleanUpHLTB(gameName) {
@@ -95,25 +202,36 @@ function parseToCSV(listOfGames) {
 	return string.slice(0, -1);
 }
 
-function exportToCSV() {
-	fs.writeFile('listOfGames.csv', parseToCSV(listOfGames));
+function exportToCSV(callback) {
+	fs.writeFile('listOfGames.csv', parseToCSV(listOfGames), function(err) {
+		if(err) throw err;
+		console.log('File written: listOfGames.csv');
+		callback();
+	});
 }
 
-function exportJSONToFile(listOfGames) {
-	fs.writeFile('listOfGames.json', JSON.stringify(listOfGames));
+function exportJSONToFile(listOfGames, callback) {
+	fs.writeFile('listOfGames.json', JSON.stringify(listOfGames), function(err) {
+		if(err) throw err;
+		console.log('File written: listOfGames.csv');
+		callback();
+	});
 }
 
-function loadJSONFromFile() {
+function loadJSONFromFile(callback) {
 	fs.readFile('listOfGames.json', 'utf8', function (err, data) {
 		if (err) throw err;
 		listOfGames = JSON.parse(data);
+		if(callback) {
+			callback();
+		}
 	});
 }
 
 function parseTime(timeString) {	
 	if(timeString === 'N/A') {
 		return NaN;
-	}else if(typeof timeString !== "undefined" && timeString !== "undefined") {
+	} else if(typeof timeString !== "undefined" && timeString !== "undefined") {
 		if((timeString.toLocaleLowerCase().indexOf("mins") > - 1) || (timeString.toLocaleLowerCase().indexOf("minutes") > - 1)) {
 			return parseInt(timeString)/60;
 		} else {
@@ -163,4 +281,4 @@ function timeToBeat(thisGame) {
 		}
 	}
 	request.post(options, callback);
-}
+}	
