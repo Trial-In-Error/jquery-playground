@@ -2,7 +2,8 @@ var DOMParser = require('xmldom').DOMParser,
 	parser = new DOMParser(),
 	ent = require('ent'),
 	cheerio = require('cheerio'),
-	request = require('request');
+	request = require('request'),
+	fs = require('fs');
 
 var listOfGames;
 
@@ -35,7 +36,7 @@ function parseMyGamesList(userAccountName) {
 	};
 	request.get(options, callback);
 }
-parseMyGamesList('Milgwyn');
+// parseMyGamesList('Milgwyn');
 
 function timeToBeatAll(listOfGames) {
 	for(var index in listOfGames) {
@@ -84,6 +85,29 @@ function sortGames() {
 			return 0 
 		}
 	})
+}
+
+function parseToCSV(listOfGames) {
+	string = "Game Name, steamID, Time to Beat\n";
+	for(var game of listOfGames) {
+		string += game.name+", "+game.id+", "+game.mainStoryLength+"\n";
+	}
+	return string;
+}
+
+function exportToCSV() {
+	fs.writeFile('listOfGames.csv', parseToCSV(listOfGames));
+}
+
+function exportJSONToFile(listOfGames) {
+	fs.writeFile('listOfGames.json', JSON.stringify(listOfGames));
+}
+
+function loadJSONFromFile() {
+	fs.readFile('listOfGames.json', 'utf8', function (err, data) {
+		if (err) throw err;
+		listOfGames = JSON.parse(data);
+	});
 }
 
 function parseTime(timeString) {	
